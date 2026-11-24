@@ -6,8 +6,7 @@ __pycache__/
 htmlcov/
 # Virtual environment
 .venv/
-.coverage
-htmlcov/
+venv/
 # Mac and editors
 .DS_Store
 .vscode/
