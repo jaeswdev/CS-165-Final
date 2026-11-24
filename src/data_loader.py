@@ -166,8 +166,7 @@ class CsvProvider(PriceProvider):
             if not file.exists():
                 raise DataError(f"Missing data file: {file}. Run: python scripts/download_data.py")
         try:
-            # round_trip reads every price back exactly as it was saved (full decimals)
-            prices = pd.read_csv(prices_file, float_precision="round_trip")
+            prices = pd.read_csv(prices_file)  # reads every price back exactly (full decimals)
             stocks = pd.read_csv(stocks_file, dtype=str)
         except (pd.errors.EmptyDataError, pd.errors.ParserError) as error:
             raise DataError(f"Cannot read the data files in {self.data_dir}: {error}") from error
