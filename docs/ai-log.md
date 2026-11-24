@@ -4,3 +4,4 @@
 |---|---|---|---|---|---|
 | 2026-11-23 | Henry | H1 | Claude | Step-by-step guide for setting up the repository | Ran every command myself and checked each result |
 | 2026-11-23 | Henry | H1 | Claude | Wrote src/models.py from CONTRACT.md | Checked fields against CONTRACT.md; ran Check 1 and Check 2 |
+| 2026-11-23 | Henry | H1 | Claude | Wrote the 6 stub files from CONTRACT.md | Ran the import check and streamlit run app.py |
