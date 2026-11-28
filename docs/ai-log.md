@@ -7,3 +7,4 @@
 | 2026-11-23 | Henry | H1   | Claude | Wrote the 6 stub files from CONTRACT.md                               | Ran the import check and streamlit run app.py                                  |
 | 2026-11-23 | Henry | H1   | Claude | Wrote tests/test_models.py (3 tests)                                  | Ran pytest: 3 passed                                                           |
 | 2026-11-27 | Anahi | A1   | Claude | Wrote src/validation.py and tests/test_validation.py from CONTRACT.md | Pasted them in myself, fixed a missing comma and a typo, ran pytest: 49 passed |
+| 2026-11-27 | Chelsea | C3 | Claude | Wrote src/comparison.py and tests/test_comparison.py from CONTRACT.md | Ran pytest: 67 passed |
