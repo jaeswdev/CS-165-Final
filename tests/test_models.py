@@ -11,6 +11,7 @@ import pytest
 
 from src.models import Holding, Portfolio, StockStats
 
+pytestmark = pytest.mark.unit
 
 def make_holding(ticker: str = "AAPL", weight: float = 0.25) -> Holding:
     """Build a small Holding for the tests."""

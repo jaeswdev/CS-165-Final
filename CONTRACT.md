@@ -1,5 +1,6 @@
 # CONTRACT.md: shared interfaces for our Stock Portfolio Suggestion Engine
 Change this file only after telling the team, and only with a yes from every module owner it affects.
+Last change: Nov 24 (D18 bad prices, D19 price providers, D21 test markers, the drop check in decline_scenario).
 
 ## Architecture and rules
 - Layered: app.py (presentation) -> src/validation.py, src/analysis.py, src/strategy.py, src/comparison.py (logic) -> src/data_loader.py (data) -> data/*.csv
@@ -7,11 +8,12 @@ Change this file only after telling the team, and only with a yes from every mod
 - Logic functions are pure: no file reads, printing, or network (the one exception is analysis.load_stock_stats).
 - The app never calls an AI API. No AI library in requirements.txt.
 - Units: returns, weights, volatility, and drop are fractions (0.1234 means 12.34%). Money is a float in dollars, rounded to cents.
+- Tests: each test has exactly one marker from pytest.ini (unit, integration, acceptance, negative, or regression); pytest runs with --strict-markers.
 
-## Data files (made by scripts/download_data.py, committed to the repo)
+## Data files (raw, made by scripts/download_data.py, committed to the repo; the cleaning happens when they are loaded)
 - data/prices.csv: column Date (YYYY-MM-DD, oldest first), then one column per ticker with the adjusted close (yfinance, auto_adjust=True). Window: 2025-11-18 to 2026-11-18.
 - data/stocks.csv: columns ticker, name, sector, sector_source. sector comes from yfinance Ticker.info["sector"].
-- data/README.md: source, download date, window, tickers, cleaning steps, how to download again.
+- data/README.md: source, download date, window, tickers, cleaning steps, how to download again, and how we would handle a price that Yahoo corrects later.
 - Tickers: Technology AAPL, MSFT, NVDA, ORCL, CSCO; Healthcare JNJ, UNH, PFE, MRK, ABBV; Energy XOM, CVX, COP, SLB, EOG.
 
 ## src/models.py (shared data classes, all @dataclass(frozen=True))
@@ -24,11 +26,14 @@ Change this file only after telling the team, and only with a yes from every mod
 ## src/data_loader.py (data layer, owner Henry)
 - DATA_DIR: Path to the repository's data/ folder
 - class DataError(Exception)
-- @dataclass(frozen=True) Dataset: prices: pd.DataFrame, stocks: pd.DataFrame
-- load_dataset(data_dir: Path = DATA_DIR) -> Dataset
+- @dataclass(frozen=True, eq=False) Dataset: prices: pd.DataFrame, stocks: pd.DataFrame
+- class PriceProvider(ABC): load() -> Dataset (D19)
+- CsvProvider(data_dir: Path = DATA_DIR): load() reads data/prices.csv and data/stocks.csv, then cleans and checks them. The app uses only this provider.
+- YahooFinanceProvider(tickers: list[str], start: str, end: str): fetch() -> tuple[pd.DataFrame, pd.DataFrame] downloads the raw prices and stocks tables (yfinance is imported inside fetch); load() cleans and checks what fetch() returns. Only scripts/download_data.py uses it.
+- load_dataset(data_dir: Path = DATA_DIR) -> Dataset: returns CsvProvider(data_dir).load()
   - prices: DatetimeIndex named "Date", oldest first, one float column per ticker, no missing values after cleaning
   - stocks: columns ticker, name, sector, sector_source; the same tickers as prices
-  - Cleaning: drop days where every price is missing; forward-fill a gap of at most 2 trading days; drop a ticker missing more than 5% of days (and note it in data/README.md)
+  - Cleaning (one function that both providers use): first treat a price that is blank, text, zero, or negative as missing (D18); then drop days where every price is missing; forward-fill a gap of at most 2 trading days; drop a ticker missing more than 5% of days (and note it in data/README.md)
   - Raise DataError with a clear message if a file is missing, or there are more than 20 tickers, fewer than 3 sectors, or fewer than 200 trading days
 
 ## src/analysis.py (logic, owner Henry)
@@ -65,11 +70,11 @@ Change this file only after telling the team, and only with a yes from every mod
 
 ## src/comparison.py (logic, owner Chelsea)
 - compare_equal_weight(portfolio: Portfolio) -> Comparison: the same 4 tickers at 25% each; difference = suggested_final_value - equal_final_value; uses the analysis functions
-- decline_scenario(portfolio: Portfolio, drop: float = 0.10) -> Scenario: base_value = portfolio.amount; loss = round(base_value x drop, 2); remaining_value = round(base_value - loss, 2)
+- decline_scenario(portfolio: Portfolio, drop: float = 0.10) -> Scenario: base_value = portfolio.amount; loss = round(base_value x drop, 2); remaining_value = round(base_value - loss, 2); ValueError if drop < 0 or drop > 1. The drop is a parameter, so 20% or 30% needs no new code.
 
 ## app.py (presentation, owner Anahi)
 - Calls only: validation.parse_amount, validation.validate_profile, analysis.load_stock_stats (inside @st.cache_data), strategy.suggest_portfolio, comparison.compare_equal_weight, comparison.decline_scenario
-- Shows, top to bottom: title and purpose; "Educational only" notice; amount box (st.text_input) and profile select box (no default); a button; error messages; stock analysis table for all stocks (ticker, company, sector, historical return; the chosen 4 marked); suggestion table (ticker, company, sector, weight %, dollars, historical return, and a total row); portfolio return and estimated final value; "Why these stocks"; "How your risk profile changed this"; the equal-weight comparison; "If all 4 stocks fall 10%"; the data source and period
+- Shows, top to bottom: title and purpose; "Educational only" notice; amount box (st.text_input) and profile select box (options from validation.PROFILES, no default); a button; error messages; stock analysis table for all stocks (ticker, company, sector, historical return; the chosen 4 marked); suggestion table (ticker, company, sector, weight %, dollars, historical return, and a total row); portfolio return and estimated final value; "Why these stocks"; "How your risk profile changed this"; the equal-weight comparison; "If all 4 stocks fall 10%"; the data source and period
 - Formats: percents with 2 decimals ("12.34%"); dollars with commas and cents ("$1,234.56")
 
 ## Git

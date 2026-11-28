@@ -5,6 +5,8 @@ Read CONTRACT.md before changing code. Never change a name or signature it defin
 ## Commands
 - pip install -r requirements.txt
 - pytest -q
+- pytest -m negative   (one test category: unit, integration, acceptance, negative, or regression)
+- pytest --cov=src   (test coverage)
 - streamlit run app.py
 - python scripts/download_data.py   (only to download the data again)
 
@@ -17,7 +19,7 @@ Read CONTRACT.md before changing code. Never change a name or signature it defin
 
 ## Rules
 - Layered architecture: calls go down only. Keep logic functions pure and small.
-- Every change comes with tests, and pytest must pass before a pull request.
+- Every change comes with tests, and pytest must pass before a pull request. Each test has one marker from pytest.ini.
 - The app never calls an AI API. No passwords or keys in the repository.
 - Work on a branch, open a pull request, and log AI help in docs/ai-log.md.
 - Explain changes in plain, simple English.
